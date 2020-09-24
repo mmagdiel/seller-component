@@ -1,6 +1,4 @@
 require("./bootstrap");
-//import "leaflet/dist/leaflet.css";
-
 window.Vue = require("vue");
 
 Vue.component("seller-route", require("./components/SellerRoute.vue").default);
