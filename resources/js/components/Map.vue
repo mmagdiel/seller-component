@@ -1,5 +1,5 @@
 <template>
-    <l-map :zoom="14" :center="initialLocation">
+    <l-map :zoom="13" :center="mapLocation">
         <l-icon-default />
         <l-tile-layer :url="mapData.url" :attribution="mapData.attribution" />
         <l-moving-marker
@@ -26,18 +26,8 @@ function rand(n) {
     return Math.random() * (max - min) + min;
 }
 
-const locations = [];
-for (let i = 0; i < 1; i++) {
-    locations.push({
-        id: i,
-        latlng: L.latLng(rand(48.8929425), rand(2.3821873)),
-        text: "Moving Marker #" + i
-    });
-}
-
 const icon = L.icon({
-    iconUrl:
-        "https://s3-eu-west-1.amazonaws.com/ct-documents/emails/A-static.png",
+    iconUrl: "./images/personaje.png",
     iconSize: [21, 31],
     iconAnchor: [10.5, 31],
     popupAnchor: [4, -25]
@@ -54,13 +44,22 @@ export default {
     },
     props: {
         duration: { type: Number, default: 2000 },
-        keepAtCenter: { type: Boolean, default: false }
+        keepAtCenter: { type: Boolean, default: false },
+        latitude: { type: Number, default: 48.8929425 },
+        longitude: { type: Number, default: 2.3821873 },
+        cordinate: { type: Array, default: [] }
     },
     data() {
         return {
-            locations,
+            locations: [
+                {
+                    id: 1,
+                    latlng: L.latLng(rand(this.latitude), rand(this.longitude)),
+                    text: "Moving Marker #" + 1
+                }
+            ],
             icon,
-            initialLocation: L.latLng(48.8929425, 2.3821873),
+            initialLocation: L.latLng(this.latitude, this.longitude),
             mapData: {
                 attribution:
                     '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attribution">CARTO</a>',
@@ -69,23 +68,58 @@ export default {
             interval: null
         };
     },
+    computed: {
+        durationInteger() {
+            return parseInt(this.map.duration);
+        },
+        mapLocation() {
+            return L.latLng(this.latitude, this.longitude);
+        }
+    },
     watch: {
         duration: {
             handler(value, oldValue) {
                 if (value !== oldValue) {
                     clearInterval(this.interval);
-                    const setRandomLatLng = () => {
+                    const setRandomLatLng = i => {
+                        console.log(i);
                         this.locations.forEach(location => {
-                            location.latlng = L.latLng(
-                                rand(48.8929425),
-                                rand(2.3821873)
+                            console.log(
+                                location,
+                                location.latlng.lat,
+                                location.latlng.lng,
+                                this.cordinate
                             );
+                            if (this.cordinate.length == 0) {
+                                console.log("estoy aca");
+                                return (location.latlng = L.latLng(
+                                    rand(this.latitude),
+                                    rand(this.longitude)
+                                ));
+                            } else {
+                                console.log("estoy por aca");
+                                const ind = this.cordinate[
+                                    i % this.cordinate.length
+                                ].next;
+                                console.log(
+                                    i,
+                                    ind,
+                                    this.cordinate[ind].latitude,
+                                    this.cordinate[ind].longitude
+                                );
+                                return (location.latlng = L.latLng(
+                                    this.cordinate[ind].latitude,
+                                    this.cordinate[ind].longitude
+                                ));
+                            }
                         });
                     };
                     this.interval = setInterval(() => {
-                        setRandomLatLng();
+                        setRandomLatLng(i);
+                        i++;
                     }, value);
-                    setRandomLatLng();
+                    let i = 0;
+                    setRandomLatLng(i);
                 }
             },
             immediate: true
@@ -95,15 +129,6 @@ export default {
 </script>
 
 <style>
-/*
-@import "~leaflet/dist/leaflet.css";
-.foobar1 {
-  /* <--- class we added above 
-  width: 100%;
-  height: 400px;
-}
-/* required styles 
-*/
 .leaflet-image-layer,
 .leaflet-layer,
 .leaflet-marker-icon,

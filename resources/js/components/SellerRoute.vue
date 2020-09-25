@@ -47,6 +47,9 @@
         <seller-map
             :duration="map.durationInteger"
             :keep-at-center="map.keepAtCenter"
+            :latitude="calcLatitude"
+            :longitude="calcLongitude"
+            :cordinate="calCordinate"
         />
     </div>
 </template>
@@ -65,6 +68,37 @@ export default {
         return {
             endpoint: {
                 base: "http://127.0.0.1:8000/api/seller"
+            },
+            defaultValues: {
+                latitude: 48.8929425,
+                longitude: 2.3821873,
+                cordinate: [
+                    {
+                        next: 1,
+                        latitude: 48.892924902316985,
+                        longitude: 2.378549462213204
+                    },
+                    {
+                        next: 2,
+                        latitude: 48.89726152313493,
+                        longitude: 2.3786591239469845
+                    },
+                    {
+                        next: 3,
+                        latitude: 48.884766340253655,
+                        longitude: 2.385254903841032
+                    },
+                    {
+                        next: 4,
+                        latitude: 48.90197202575776,
+                        longitude: 2.3811537380218444
+                    },
+                    {
+                        next: 0,
+                        latitude: 48.90135077760079,
+                        longitude: 2.391390677118333
+                    }
+                ]
             },
             labels: {
                 seller: "Vendedor",
@@ -97,6 +131,24 @@ export default {
     computed: {
         durationInteger() {
             return parseInt(this.map.duration);
+        },
+        calcLatitude() {
+            return this.data.cordinate.length == 0
+                ? this.defaultValues.latitude
+                : this.data.cordinate[0].latitude;
+        },
+        calcLongitude() {
+            return this.data.cordinate.length == 0
+                ? this.defaultValues.longitude
+                : this.data.cordinate[0].longitude;
+        },
+        calCordinate() {
+            return this.data.cordinate.length == 0
+                ? this.defaultValues.cordinate
+                : this.data.cordinate.map((el, i) => ({
+                      ...el,
+                      next: (i + 1) % this.data.cordinate.length
+                  }));
         }
     },
     methods: {
@@ -116,7 +168,10 @@ export default {
             const url = `${this.endpoint.base}/${this.state.seller}/${this.state.date}`;
             axios.get(url).then(response => {
                 console.log(response.data.data);
-                this.data.cordinate = response.data.data;
+                this.data.cordinate = response.data.data.map(el => ({
+                    latitude: parseFloat(el.latitude),
+                    longitude: parseFloat(el.longitude)
+                }));
                 this.map.areAbled =
                     response.data.data.length > 0 ? true : false;
                 this.map.areRequired = true;
